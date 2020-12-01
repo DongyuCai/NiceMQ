@@ -30,7 +30,6 @@ import com.tunnel.common.nio.EventLoopGroupManager;
 import com.tunnel.common.tunnel.TunnelBaseHandler;
 import com.tunnel.common.tunnel.TunnelDataQueueManager;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
 public class MqClientHandler extends TunnelBaseHandler {
@@ -63,7 +62,7 @@ public class MqClientHandler extends TunnelBaseHandler {
 	}
 
 	@Override
-	protected void handleData(ChannelHandlerContext ctx, ByteBuf buf, byte flag) {
+	protected void handleData(ChannelHandlerContext ctx, byte[] data, byte flag) {
 		
 		switch (flag) {
 			case TunnelDataQueueManager.PING_MSG:
@@ -72,23 +71,21 @@ public class MqClientHandler extends TunnelBaseHandler {
 				
 			//注册返回结果
 			case TunnelDataQueueManager.REGISTER_MSG:
-				doRegisterResult(ctx, buf);
+				doRegisterResult(ctx, data);
 				break;
 			//TCP
 			case TunnelDataQueueManager.TCP_DATA_MSG:
-				tcpDataMsg(ctx,buf);
+				tcpDataMsg(ctx,data);
 				break;
 			default:
 				break;
 		}
 	}
 
-	public void doRegisterResult(ChannelHandlerContext ctx, ByteBuf buf){
-		byte[] content = new byte[buf.readableBytes()];
-		buf.getBytes(buf.readerIndex(), content,0,content.length);
-		String result = new String(content);
-//		LogUtil.log("mq node connect result:"+result);
+	public void doRegisterResult(ChannelHandlerContext ctx, byte[] data){
+		String result = new String(data);
 		if(!result.contains("REGISTER SUCCESS")){
+			LogUtil.log("connect result:"+result);
 			//关闭netty
 			EventLoopGroupManager.shutdown(0);
 //			System.exit(0);//停止程序
@@ -96,10 +93,8 @@ public class MqClientHandler extends TunnelBaseHandler {
 	}
 	
 	
-	public void tcpDataMsg(ChannelHandlerContext ctx, ByteBuf buf){
-		byte[] content = new byte[buf.readableBytes()];
-		buf.getBytes(buf.readerIndex(), content,0,content.length);
-		String result = new String(content);
+	public void tcpDataMsg(ChannelHandlerContext ctx, byte[] data){
+		String result = new String(data);
 		this.msgListener.receive(result);
 		//前16个字符是
 		/*if(buf.readableBytes() > 16){

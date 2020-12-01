@@ -15,8 +15,8 @@ import com.nicemq.common.util.Ajida4NiceMq;
 public class UpdateCodeScript {
 
 	public static void main(String[] args) {
-//		fullProjectUpdate("192.168.199.45", 22, "test", "ybsl1234", "/usr/local","nicemq_node");
-		fullProjectUpdate("218.90.120.43", 22, "pro","18962211182!189.cn", "/usr/local","nicemq_node");
+		fullProjectUpdate("192.168.199.45", 22, "test", "ybsl1234", "/usr/local","nicemq_node");
+//		fullProjectUpdate("218.90.120.43", 22, "pro","18962211182!189.cn", "/usr/local","nicemq_node");
 	}
 	
 	public static void fullProjectUpdate(String ip,int port,String env,String password,String distDir,String appName){

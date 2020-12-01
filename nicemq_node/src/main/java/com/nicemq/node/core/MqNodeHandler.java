@@ -23,8 +23,6 @@
  */
 package com.nicemq.node.core;
   
-import java.io.UnsupportedEncodingException;
-
 import org.axe.util.LogUtil;
 import org.axe.util.StringUtil;
 
@@ -33,7 +31,6 @@ import com.tunnel.common.constant.Constant;
 import com.tunnel.common.tunnel.TunnelBaseHandler;
 import com.tunnel.common.tunnel.TunnelDataQueueManager;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;  
@@ -45,25 +42,15 @@ public class MqNodeHandler extends TunnelBaseHandler{
 
 	public static final AttributeKey<TcpClient> CTX_ATTR_TCP_CLIENT_KEY = AttributeKey.valueOf("TcpClient"); 
     
-
 	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		super.channelActive(ctx);
-	}
-
-	@Override
-	protected void handleData(ChannelHandlerContext ctx, ByteBuf buf, byte flag) {
+	protected void handleData(ChannelHandlerContext ctx, byte[] data, byte flag) {
 		switch (flag) {
 			case TunnelDataQueueManager.PING_MSG:
 //				LogUtil.log("Tunnel心跳");
 				break;
 			//注册
 			case TunnelDataQueueManager.REGISTER_MSG:
-				registerMsg(ctx,buf);
-				break;
-			//TCP
-			case TunnelDataQueueManager.TCP_DATA_MSG:
-				tcpDataMsg(ctx, buf);
+				registerMsg(ctx,data);
 				break;
 			default:
 				break;
@@ -71,10 +58,8 @@ public class MqNodeHandler extends TunnelBaseHandler{
 	}
 	
 
-    private void registerMsg(ChannelHandlerContext ctx, ByteBuf buf) {
+    private void registerMsg(ChannelHandlerContext ctx, byte[] data) {
     	//客户端来的注册信息
-		byte[] data = new byte[buf.readableBytes()];
-    	buf.getBytes(buf.readerIndex(), data,0,data.length);
         String content = new String(data);
 		if (StringUtil.isNotEmpty(content) || content.contains(Constant.SPLIT_FLAG)) {
 			//content格式：
@@ -93,47 +78,6 @@ public class MqNodeHandler extends TunnelBaseHandler{
 		}
 	}
     
-	private void tcpDataMsg(ChannelHandlerContext ctx, ByteBuf buf){
-		//前16个字符是
-		//connectionId 时间戳+三位随机数，代表http请求的编号 占16位
-		if(buf.readableBytes() > 16){
-			byte[] connectionIdBytes = new byte[16];
-			buf.getBytes(buf.readerIndex(), connectionIdBytes, 0, 16);
-			
-			byte[] dataBytes = new byte[buf.readableBytes()-16];
-			if(dataBytes.length > 0){
-				buf.getBytes(buf.readerIndex()+16, dataBytes, 0, dataBytes.length);
-			}
-			try {
-				LogUtil.log(new String(dataBytes,"UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				LogUtil.error(e);
-			}
-			/*TODO 改成根据路由，消息发送到其他client
-			TcpChannelContext tcpCtx = TcpChannelManager.get(new String(connectionIdBytes));
-			if(tcpCtx != null){
-				//这里不同于httpServerHandler
-				//TcpServer没有Http解析器，他只识别管道中的ByteBuf数据，byte[]数据是无法发送出去的
-//				LogUtil.log(new String(dataBytes));
-//				ByteBuf buffer = ctx.alloc().buffer();
-//		        buffer.writeBytes(dataBytes);
-
-                //netty channel里发送数据是都堆在堆内存里的，空间限制，因此如果写的太快，能回oom
-                int waiteMs = 1;
-                while(!ctx.channel().isWritable()){
-                	try {
-                		Thread.sleep(waiteMs);
-					} catch (Exception e) {}
-                	waiteMs = waiteMs+1;
-                }
-                
-				tcpCtx.getChannel().writeAndFlush(dataBytes);
-			}*/
-		}
-	}
-	
-
-	
     @Override  
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		LogUtil.error(cause);

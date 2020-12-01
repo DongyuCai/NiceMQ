@@ -30,11 +30,11 @@ public class NodeRest {
 		return TcpClientManager.getAllClientTags();
 	}
 	
-	@Request(path="/send_message",method=RequestMethod.POST,desc="发送消息")
-	public void send_message(
+	@Request(path="/send_msg",method=RequestMethod.POST,desc="发送消息")
+	public void send_msg(
 		@RequestParam(name="tags",required=true,desc="路径，多层次使用Constant.SPLIT_FLAG分割")String tags,
 		@RequestParam(name="matchMode",required=false,desc="多层次路径匹配方式，必须使用ClientMatchMode里指定方式")String matchMode,
-		@RequestParam(name="message",required=true,desc="消息")String message
+		@RequestParam(name="msg",required=true,desc="消息")String message
 			){
 		LogUtil.log(tags);
 		ClientMatchMode mode = ClientMatchMode.getMode(matchMode);

@@ -23,8 +23,11 @@
  */
 package com.nicemq.client.core;
   
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.axe.util.HttpUtil;
 import org.axe.util.LogUtil;
 
 import com.tunnel.common.constant.Constant;
@@ -50,7 +53,31 @@ import io.netty.handler.timeout.IdleStateHandler;
  * 注册成功后，负责启动汇报管道
  * 全部启动完成后，开始接受请求
  */
-public class MqClient{
+public final class MqClient{
+	
+	/**
+	 * 创建一个消息消费者
+	 * @param mqNodeIp 消息服务节点的ip
+	 * @param mqNodePort 消息服务节点的端口
+	 * @param tags 路径层次
+	 * @param msgListener 回调处理
+	 * @return
+	 */
+	public static MqClient createConsumer(String mqNodeIp,int mqNodePort,String[] tags,MsgListener msgListener){
+		MqClient client = new MqClient(mqNodeIp, mqNodePort);
+		client.startListenMsg(tags, msgListener);
+		return client;
+	}
+	
+	/**
+	 * 创建一个消息生产者
+	 * @param hostUri mq服务http地址（http://ip:16619），可以是域名
+	 * @return
+	 */
+	public static MqClient createProvider(String hostUri){
+		return new MqClient(hostUri);
+	}
+	
 	private EventLoopGroup group = new NioEventLoopGroup();  
 	private Bootstrap  bootstrap;
     private Channel channel;
@@ -61,7 +88,7 @@ public class MqClient{
     //mq节点的端口
     private int mqNodePort = 0;
     
-    public MqClient(String mqNodeIp,int mqNodePort) {
+    private MqClient(String mqNodeIp,int mqNodePort) {
     	//启动消息队列，不怕重复启动
     	TunnelDataQueueManager.startTunnelDataQueue("mq client", true);
     	
@@ -69,8 +96,16 @@ public class MqClient{
     	this.mqNodePort = mqNodePort;
 	}
     
+    private String hostSendMsgUrl;//mq服务的发送消息地址
+    private MqClient(String hostUri){
+    	if(!hostUri.endsWith("/")){
+    		hostUri = hostUri+"/";
+    	}
+    	hostSendMsgUrl = hostUri+"node/send_msg";
+    }
+    
     //bootstrap配置好
-    public void start(String[] tags,MsgListener msgListener){
+    private void startListenMsg(String[] tags,MsgListener msgListener){
     	EventLoopGroupManager.add(0, group);
     	bootstrap = new Bootstrap();
     	bootstrap.group(group)
@@ -93,7 +128,7 @@ public class MqClient{
     }
     
     
-    public void connect(){
+    void connect(){
         if (channel != null && channel.isActive()) {
             return;
         }
@@ -129,15 +164,13 @@ public class MqClient{
         });
     }
     
-    public static void main(String[] args) {
-
-		//测试
-    	new MqClient("192.168.199.45", 6619)
-    	.start(new String[]{"gudidai","box","A22","20201113145640932"}, new MsgListener() {
-			@Override
-			public void receive(String msg) {
-				LogUtil.log("处理:"+msg);
-			}
-		});
-	}
+    //发送设备指令
+  	public void sendMsg(String[] tags,String msg)throws Exception{
+  		//防止msg破坏http发送的json格式，需要msg里转意
+  		Map<String,String> params = new HashMap<>();
+  		params.put("tags", String.join("#_SPLIT-910810#", tags));
+  		params.put("matchMode", "FULL");
+  		params.put("msg", msg);
+  		HttpUtil.sendPost(hostSendMsgUrl, params);
+  	}
 }
