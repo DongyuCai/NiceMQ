@@ -7,7 +7,7 @@ import org.axe.util.StringUtil;
 
 import com.ajida.AxeAppConfig;
 import com.ajida.SSHConfig;
-import com.nicemq.common.util.Ajida4NiceMq;
+import com.nicemq.node.util.Ajida4NiceMq;
 
 /**
  * 后端代码更新到测试与生产环境
