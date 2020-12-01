@@ -36,7 +36,6 @@ public class NodeRest {
 		@RequestParam(name="matchMode",required=false,desc="多层次路径匹配方式，必须使用ClientMatchMode里指定方式")String matchMode,
 		@RequestParam(name="msg",required=true,desc="消息")String message
 			){
-		LogUtil.log(tags);
 		ClientMatchMode mode = ClientMatchMode.getMode(matchMode);
 		if(mode == null){
 			LogUtil.log("不支持的路径匹配："+matchMode);
