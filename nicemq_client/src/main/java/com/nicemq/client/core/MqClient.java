@@ -171,6 +171,18 @@ public final class MqClient{
   		params.put("tags", String.join("#_SPLIT-910810#", tags));
   		params.put("matchMode", "FULL");
   		params.put("msg", msg);
-  		HttpUtil.sendPost(hostSendMsgUrl, params);
+  		try {
+  			String result = HttpUtil.sendPost(hostSendMsgUrl, params);
+  			if(!"SUCCESS".equals(result)){
+  				throw new Exception(result);
+  			}
+		} catch (Exception e) {
+			if(e.getMessage().contains("800")){
+				//说明参数或请求错误
+				throw new Exception("消息服务接口请求参数错误");
+			}else{
+				throw e;
+			}
+		}
   	}
 }
