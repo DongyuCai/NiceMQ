@@ -14,6 +14,5 @@ public class Test {
 				LogUtil.log("收到："+msg);
 			}
 		});
-		System.out.println("ok");
 	}
 }
