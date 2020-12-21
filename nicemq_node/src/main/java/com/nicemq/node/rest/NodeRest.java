@@ -14,7 +14,6 @@ import com.nicemq.node.core.TcpClientManager.TcpClient;
 import com.tunnel.common.constant.Constant;
 import com.tunnel.common.tunnel.TunnelDataQueueManager;
 import com.tunnel.common.util.CollectionUtil;
-import com.tunnel.common.util.LogUtil;
 
 @Controller(basePath="/node",desc="对外接口")
 public class NodeRest {
@@ -41,7 +40,7 @@ public class NodeRest {
 		}
 		Set<TcpClient> clientSet = TcpClientManager.get(tags.split(Constant.SPLIT_FLAG), mode);
 		if(CollectionUtil.isEmpty(clientSet)){
-			LogUtil.log("Client 不存在");
+//			LogUtil.log("Client 不存在");
 			return "Client 不存在";
 		}
 		for(TcpClient client:clientSet){

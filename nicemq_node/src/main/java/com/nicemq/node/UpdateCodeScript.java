@@ -5,9 +5,9 @@ import java.util.Scanner;
 import org.axe.util.LogUtil;
 import org.axe.util.StringUtil;
 
+import com.ajida.Ajida4SinglePoint;
 import com.ajida.AxeAppConfig;
 import com.ajida.SSHConfig;
-import com.nicemq.node.util.Ajida4NiceMq;
 
 /**
  * 后端代码更新到测试与生产环境
@@ -36,7 +36,7 @@ public class UpdateCodeScript {
 			
 			appConfig.addConfigParams("env", env);
 			
-			Ajida4NiceMq.axeFullProjectUpdate(false,env, appConfig, new String[]{}, sshConfig, distDir,new String[]{});
+			Ajida4SinglePoint.axeFullProjectUpdate(false,env, appConfig, new String[]{}, sshConfig, distDir,new String[]{});
 		} catch (Exception e) {
 			LogUtil.error(e);
 		}

@@ -34,6 +34,7 @@
 			<groupId>com.ajida</groupId>
 			<artifactId>ajida</artifactId>
 			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
 		</dependency>
 		
 		<!-- log4j -->
