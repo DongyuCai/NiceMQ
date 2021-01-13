@@ -9,7 +9,7 @@ import com.nicemq.client.core.MsgListener;
 public class Test {
 	public static void main(String[] args) {
 		//测试
-		MqClient.createConsumer("218.90.120.43", 6619, new String[]{"gudidai","box","20201113145640931"}, new ConnectSuccessListener() {
+		MqClient.createConsumer("218.90.120.43", 6619, "id:123123123,1231231231", new String[]{"gudidai","box","20201113145640931"}, new ConnectSuccessListener() {
 			@Override
 			public void connectSuccess() {
 				LogUtil.log("连接成功");

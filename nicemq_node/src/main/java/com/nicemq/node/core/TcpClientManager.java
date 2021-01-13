@@ -24,7 +24,6 @@
 package com.nicemq.node.core;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,23 +34,25 @@ import com.nicemq.common.constant.ClientMatchMode;
 import com.tunnel.common.constant.Constant;
 import com.tunnel.common.util.CollectionUtil;
 
-import io.netty.channel.ChannelHandlerContext;
-
 /**
  * 客户端通讯录
  */
 public class TcpClientManager {
 	public static void main(String[] args) {
 		String[] tags = {"zhicheng","box","A24"};
+		add(new TcpClient("1,2"+Constant.SPLIT_FLAG+Constant.SPLIT_FLAG+String.join(Constant.SPLIT_FLAG, tags),null));
+		tags = new String[]{"zhicheng","app","user","111"};
 		add(new TcpClient(String.join(Constant.SPLIT_FLAG, tags),null));
 		tags = new String[]{"zhicheng","app","user","111"};
-		TcpClient client = add(new TcpClient(String.join(Constant.SPLIT_FLAG, tags),null));
+		add(new TcpClient(String.join(Constant.SPLIT_FLAG, tags),null));
 		
 		
 		LogUtil.log("连接树结构：");
-		LogUtil.log(JsonUtil.toJson(mainBranch));
+		LogUtil.log(getClientTagsTree());
+		LogUtil.log("所有连接：");
+		LogUtil.log(JsonUtil.toJson(getAllClientTags()));
 		
-		LogUtil.log("第一次查询结果：");
+		/*LogUtil.log("第一次查询结果：");
 		Set<TcpClient> set = get(new String[]{"zhicheng"},ClientMatchMode.MORE_MATCH);
 		if(CollectionUtil.isNotEmpty(set)){
 			for(TcpClient el:set){
@@ -62,83 +63,14 @@ public class TcpClientManager {
 		remove(client);
 
 		LogUtil.log("连接树结构：");
-		LogUtil.log(JsonUtil.toJson(mainBranch));
+		LogUtil.log(getClientTagsTree());
 		LogUtil.log("第二次查询结果：");
 		set = get(new String[]{"zhicheng"},ClientMatchMode.MORE_MATCH);
 		if(CollectionUtil.isNotEmpty(set)){
 			for(TcpClient el:set){
 				LogUtil.log(el.getTags());
 			}
-		}
-	}
-	
-	/**
-	 * 客户的通讯工具
-	 * 客户端
-	 */
-	public static class TcpClient{
-		
-		/**
-		 * 客户的标签
-		 */
-		private String tags;
-		private String[] tagsAry;
-		
-		private ChannelHandlerContext ctx;
-		
-		public TcpClient(String tags,ChannelHandlerContext ctx) {
-			this.tags=tags;
-			this.tagsAry=tags.split(Constant.SPLIT_FLAG);
-			this.ctx = ctx;
-		}
-
-		public String getTags() {
-			return tags;
-		}
-		
-		public String[] getTagsAry() {
-			return tagsAry;
-		}
-		
-		public ChannelHandlerContext getCtx() {
-			return ctx;
-		}
-	}
-	
-	/**
-	 * 用于构建客户端连接的保存栈，树结构
-	 * 每个节点，既可以存一系列tag，也可以存client集合，集合空表示这个节点都是tag，集合可以只有1个，一般情况下，1对1绑定就是这样
-	 */
-	private static class TcpClientTreeBranch extends HashMap<String, TcpClientTreeBranch>{
-		private static final long serialVersionUID = 1l;
-		
-		private Set<TcpClient> clientSet = new HashSet<>();
-		
-		public void addTcpClient(TcpClient client){
-			clientSet.add(client);
-		}
-		
-		public Set<TcpClient> getClientSet() {
-			//返回是拷贝集合，禁止修改原集合
-			Set<TcpClient> newSet = new HashSet<>();
-			newSet.addAll(clientSet);
-			return newSet;
-		}
-		
-		@Override
-		@Deprecated
-		public TcpClientTreeBranch put(String key, TcpClientTreeBranch value) {
-			return super.put(key, value);
-		}
-		
-		public TcpClientTreeBranch addSubBranch(String tag, TcpClientTreeBranch branch){
-			super.put(tag, branch);
-			return branch;
-		}
-		
-		public void removeClient(TcpClient client){
-			clientSet.remove(client);
-		}
+		}*/
 	}
 	
 	/**
@@ -153,8 +85,29 @@ public class TcpClientManager {
 	 * 能看出路径层次结构，但是看不出多少连接
 	 */
 	public static String getClientTagsTree(){
-		synchronized (mainBranch) {
-			return JsonUtil.toJson(mainBranch);
+		Map<String,Object> result = new HashMap<>();
+		buildClientTagsTree(result, mainBranch);
+		return JsonUtil.toJson(result);
+	}
+	
+	/**
+	 * clients:{}
+	 * router:{
+	 * 			router:{}
+	 * 		}
+	 */
+	private static void buildClientTagsTree(Map<String,Object> result,TcpClientTreeBranch branch){
+		//clients
+		int i = 1;
+		for(TcpClient tc:branch.getClientSet()){
+			result.put("CLIENT_"+i++, tc);
+		}
+		
+		//router
+		for(String tag:branch.keySet()){
+			Map<String,Object> nextLevelResult = new HashMap<>();
+			result.put("TAG_"+tag, nextLevelResult);
+			buildClientTagsTree(nextLevelResult, branch.get(tag));
 		}
 	}
 	
@@ -162,11 +115,9 @@ public class TcpClientManager {
 	 * 返回所有连接tags，对于客户端数量
 	 */
 	public static Map<String,Integer> getAllClientTags(){
-		synchronized (mainBranch) {
-			Map<String,Integer> tagsMap = new HashMap<>();
-			getAllClientTags(tagsMap,mainBranch);
-			return tagsMap;
-		}
+		Map<String,Integer> tagsMap = new HashMap<>();
+		getAllClientTags(tagsMap,mainBranch);
+		return tagsMap;
 	}
 	
 	private static void getAllClientTags(Map<String,Integer> tagsMap,TcpClientTreeBranch branch){
@@ -184,7 +135,7 @@ public class TcpClientManager {
 	
 	public static TcpClient add(TcpClient client){
 		synchronized (mainBranch) {
-			LogUtil.log("online: "+client.getTags());
+//			LogUtil.log("online: "+client.getTags());
 			addToTcpClientTree(client, mainBranch,0);
 			return client;
 		}
@@ -245,7 +196,7 @@ public class TcpClientManager {
 	
 	public static void remove(TcpClient client){
 		synchronized (mainBranch) {
-			LogUtil.log("offline: "+client.getTags());
+//			LogUtil.log("offline: "+client.getTags());
 			removeFromTcpClientTree(client, mainBranch, 0);
 		}
 	}

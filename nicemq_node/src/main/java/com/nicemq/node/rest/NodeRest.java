@@ -9,10 +9,9 @@ import org.axe.annotation.mvc.RequestParam;
 import org.axe.constant.RequestMethod;
 
 import com.nicemq.common.constant.ClientMatchMode;
+import com.nicemq.node.core.TcpClient;
 import com.nicemq.node.core.TcpClientManager;
-import com.nicemq.node.core.TcpClientManager.TcpClient;
 import com.tunnel.common.constant.Constant;
-import com.tunnel.common.tunnel.TunnelDataQueueManager;
 import com.tunnel.common.util.CollectionUtil;
 
 @Controller(basePath="/node",desc="对外接口")
@@ -31,7 +30,7 @@ public class NodeRest {
 	@Request(path="/send_msg",method=RequestMethod.POST,desc="发送消息")
 	public String send_msg(
 		@RequestParam(name="tags",required=true,desc="路径，多层次使用Constant.SPLIT_FLAG分割")String tags,
-		@RequestParam(name="matchMode",required=false,desc="多层次路径匹配方式，必须使用ClientMatchMode里指定方式")String matchMode,
+		@RequestParam(name="matchMode",required=false,desc="多层次路径匹配方式，FULL：唯一全匹配，MORE：广播")String matchMode,
 		@RequestParam(name="msg",required=true,desc="消息")String message
 			){
 		ClientMatchMode mode = ClientMatchMode.getMode(matchMode);
@@ -44,7 +43,7 @@ public class NodeRest {
 			return "Client 不存在";
 		}
 		for(TcpClient client:clientSet){
-			TunnelDataQueueManager.commitData(TunnelDataQueueManager.TCP_DATA_MSG, client.getCtx(), message.getBytes());
+			client.sendMsg(message);
 		}
 		
 		return "SUCCESS";

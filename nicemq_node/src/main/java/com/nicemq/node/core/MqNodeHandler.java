@@ -26,7 +26,6 @@ package com.nicemq.node.core;
 import org.axe.util.LogUtil;
 import org.axe.util.StringUtil;
 
-import com.nicemq.node.core.TcpClientManager.TcpClient;
 import com.tunnel.common.constant.Constant;
 import com.tunnel.common.tunnel.TunnelBaseHandler;
 import com.tunnel.common.tunnel.TunnelDataQueueManager;
@@ -62,9 +61,6 @@ public class MqNodeHandler extends TunnelBaseHandler{
     	//客户端来的注册信息
         String content = new String(data);
 		if (StringUtil.isNotEmpty(content) || content.contains(Constant.SPLIT_FLAG)) {
-			//content格式：
-			//tag1+SPLIT_FLAG+tag2...
-			
 			TcpClient client = TcpClientManager.add(new TcpClient(content,ctx));
 			
 			//如果登记注册成功

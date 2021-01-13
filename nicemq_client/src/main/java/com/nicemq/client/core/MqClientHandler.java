@@ -34,12 +34,14 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class MqClientHandler extends TunnelBaseHandler {
 	private MqClient client;
+	private String consumerName;//消费者名称
 	private String[] tags;//路径
 	private MsgListener msgListener;
 	
-	protected MqClientHandler(MqClient client,String[] tags,MsgListener msgListener) {
+	protected MqClientHandler(MqClient client,String consumerName,String[] tags,MsgListener msgListener) {
 		super("mq client handler");
 		this.client = client;
+		this.consumerName = consumerName;
 		this.tags = tags;
 		this.msgListener = msgListener;
 	}
@@ -57,7 +59,7 @@ public class MqClientHandler extends TunnelBaseHandler {
 		} catch (Exception e) {
 			LogUtil.error(e);
 		}*/
-		String content = String.join(Constant.SPLIT_FLAG, this.tags);
+		String content = consumerName+Constant.SPLIT_FLAG+Constant.SPLIT_FLAG+String.join(Constant.SPLIT_FLAG, this.tags);
 		TunnelDataQueueManager.commitData(TunnelDataQueueManager.REGISTER_MSG, ctx, content.getBytes());
 	}
 

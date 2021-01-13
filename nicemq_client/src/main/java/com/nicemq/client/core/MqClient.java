@@ -60,16 +60,18 @@ public final class MqClient {
 	 *            消息服务节点的ip
 	 * @param mqNodePort
 	 *            消息服务节点的端口
+	 * @param consumerName
+	 *            消费者的名称
 	 * @param tags
 	 *            路径层次
 	 * @param msgListener
 	 *            回调处理
 	 * @return
 	 */
-	public static MqClient createConsumer(String mqNodeIp, int mqNodePort, String[] tags,
+	public static MqClient createConsumer(String mqNodeIp, int mqNodePort, String consumerName, String[] tags,
 			ConnectSuccessListener connectionSuccessListener, MsgListener msgListener) {
 		MqClient client = new MqClient(mqNodeIp, mqNodePort);
-		client.startListenMsg(tags, connectionSuccessListener, msgListener);
+		client.startListenMsg(consumerName, tags, connectionSuccessListener, msgListener);
 		return client;
 	}
 
@@ -114,7 +116,7 @@ public final class MqClient {
 	}
 
 	// bootstrap配置好
-	private void startListenMsg(String[] tags, ConnectSuccessListener connectionSuccessListener,
+	private void startListenMsg(String consumerName, String[] tags, ConnectSuccessListener connectionSuccessListener,
 			MsgListener msgListener) {
 		EventLoopGroupManager.add(0, group);
 		bootstrap = new Bootstrap();
@@ -131,10 +133,10 @@ public final class MqClient {
 						// 请求内容不超过10M
 						p.addLast(new DelimiterBasedFrameDecoder(1024 * 1024 * 10,
 								Unpooled.copiedBuffer(Constant.TUNNEL_DATA_END_FLAG_BYTES)));
-						p.addLast(new MqClientHandler(MqClient.this, tags, msgListener));
+						p.addLast(new MqClientHandler(MqClient.this, consumerName, tags, msgListener));
 					}
 				});
-		
+
 		this.connectionSuccessListener = connectionSuccessListener;
 		connect();
 	}
